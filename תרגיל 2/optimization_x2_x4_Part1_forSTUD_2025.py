@@ -16,7 +16,6 @@ def x2(x):
 
 def x2_(x):
     """Derivative of x²
-    TODO: Implement the derivative of x²
     Hint: The derivative of x² is 2x
     """
     return 2*x  # Replace with your implementation
@@ -29,7 +28,6 @@ def x4(x):
 
 def x4_(x):
     """Derivative of x⁴
-    TODO: Implement the derivative of x⁴
     Hint: The derivative of x⁴ is 4x³
     """
     return 4*x**3  # Replace with your implementation
@@ -65,7 +63,7 @@ def momentum_update(velocity, graident,learning_rate,momentum=0.9):
 def momentumGD(gradient1, gradient2, hiddenLayer_Size, input, learningRate):
     x1, x2 = input*0.01, input*0.01
     x1_history, x2_history = [input], [input]
-    velocity1, velocity2 = 0, 0    
+    velocity1, velocity2 = 0.0, 0.0    
     for i in range(hiddenLayer_Size):
         grad1 = gradient1(x1)
         grad2 = gradient2(x2)
@@ -93,20 +91,69 @@ Implement and compare four different optimization methods:
 """
 
 
-def nesterov_update(x, velocity, gradient_func, momentum=0.9):
+def nesterov_update(x,velocity, gradient_func,learning_rate, momentum=0.9):
+   
     """
-    TODO: Implement Nesterov update
     Hint: Look ahead using current velocity before computing gradient
     """
-    return None  # Replace with your implementation
+    x_ahead = x + momentum * velocity
+    gradient = gradient_func(x_ahead)  # Calculate the gradient at x_ahead
+    velocity = momentum * velocity - learning_rate * gradient
+    x = x + velocity
+
+    return velocity, x
+
+def NAG(gradient1, gradient2, hiddenLayer_Size, input, learningRate):
+    x1,x2=input*0.01,input*0.01
+    x1_history, x2_history = [input], [input]
+    velocity1,velocity2=0.0,0.0
+
+    for i in range(hiddenLayer_Size):
+        grad1 = gradient1(x1)
+        grad2 = gradient2(x2)
+
+        if (np.abs(grad1) < 1e-3) and (np.abs(grad2) < 1e-3):
+            print(f"Iteration stoped at {i+1}: x1 = {x1*100:.4f}, x2 = {x2*100:.4f}")
+            break
+        
+        velocity1,x1=nesterov_update(x1,velocity1,grad1,learningRate)
+        velocity2,x2=nesterov_update(x2,velocity2,grad2,learningRate)
+
+        x1_history.append(x1*100)
+        x2_history.append(x2*100)
+
+        print(f"Iteration {i+1}: x1 = {x1*100:.4f}, x2 = {x2*100:.4f}")
+    return x1_history, x2_history
 
 
-def adagrad_update(gradient, historical_gradient):
+def adagrad_update(gradient, historical_gradient, learning_rate):    
     """
-    TODO: Implement AdaGrad update
     Hint: Use historical gradient to adjust learning rate
     """
-    return None  # Replace with your implementation
+    historical_gradient=gradient**2
+    gradient-=(learning_rate*gradient)/(np.sqrt(historical_gradient)+1e-7)#very small epsilon
+    return gradient, historical_gradient
+
+def adagrad(gradient1, gradient2, hiddenLayer_Size, input, learningRate):
+    x1,x2=input*0.01,input*0.01
+    x1_history, x2_history = [input], [input]
+    historical_gradient1,historical_gradient2=0,0
+    for i in range(hiddenLayer_Size):
+        grad1 = gradient1(x1)
+        grad2 = gradient2(x2)
+        if (np.abs(grad1) < 1e-3) and (np.abs(grad2) < 1e-3):
+            print(f"Iteration stoped at {i+1}: x1 = {x1*100:.4f}, x2 = {x2*100:.4f}")
+            break
+        grad1,historical_gradient1= adagrad_update(grad1, historical_gradient1, learningRate)
+        grad2,historical_gradient2= adagrad_update(grad2, historical_gradient2, learningRate)
+        x1-=grad1
+        x2-=grad2
+
+        x1_history.append(x1*100)
+        x2_history.append(x2*100)
+
+        print(f"Iteration {i+1}: x1 = {x1*100:.4f}, x2 = {x2*100:.4f}")
+    return x1_history, x2_history
 
 def plotGrid (x1,x2):
     plt.figure(figsize=(10, 6))
@@ -120,8 +167,7 @@ def plotGrid (x1,x2):
 # Example usage and testing code
 if __name__ == "__main__":
     # Starting points
-    X2 = X4 = X2m = X4m = X2n = X4n = X2g = X4g = 10.0
-
+    X= 10.0
     # Hyperparameters (you should tune these)
     lr = 0.01  # Learning rate for basic gradient descent
     momentum = 0.9  # Momentum coefficient
@@ -134,13 +180,43 @@ if __name__ == "__main__":
         'nag_x2': [], 'nag_x4': [],
         'adagrad_x2': [], 'adagrad_x4': []
     }
-   # print(x4_(1))
-
-    x1,x2=GD(x2_, x4_, 50, 5, 0.01)
-    plotGrid(x1,x2)
-    x1,x2=momentumGD(x2_, x4_, 50, 5, 0.01)
-    plotGrid(x1,x2)
+    
     # Plotting
+def plotGrid(x1_history, x2_history, optimizer):
+    plt.plot(x1_history, label='x1')
+    plt.plot(x2_history, label='x2')
+    plt.title(f"{optimizer}")
+    plt.xlabel('x')
+    plt.ylabel('Value')
+    plt.legend()
+    plt.grid(True)
+# Store the results for Gradient Descent
+x1,x2=GD(x2_, x4_,num_steps, X, lr)
+history['sgd_x2'] = x1
+history['sgd_x4'] = x2
+plotGrid(x1, x2, "GD")
+
+# Store the results for Momentum
+x1,x2=momentumGD(x2_, x4_,num_steps, X, lr)
+history['momentum_x2'] = x1
+history['momentum_x4'] = x2
+plotGrid(x1, x2, "Momentum")
+
+# Store the results for NAG
+x1, x2 = NAG(x2_, x4_,num_steps, X, lr)
+history['nag_x2'] = x1
+history['nag_x4'] = x2
+plotGrid(x1, x2, "NAG")
+
+# Store the results for AdaGrad
+x1, x2 = adagrad(x2_, x4_,num_steps, X, lr)
+history['adagrad_x2'] = x1
+history['adagrad_x4'] = x2
+plotGrid(x1, x2, "AdaGrad")
+
+# Show all the plots
+plt.tight_layout()
+plt.show()
 
     # TODO: Implement the training loops for each method
 
