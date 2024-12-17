@@ -134,7 +134,7 @@ def adagrad_update(gradient, historical_gradient, learning_rate):
     Hint: Use historical gradient to adjust learning rate
     """
     historical_gradient=gradient**2
-    gradient-=(learning_rate*gradient)/(np.sqrt(historical_gradient)+1e-7)#very small epsilon
+    gradient-=(learning_rate*gradient)/(np.sqrt(historical_gradient)+1e-3)#very small epsilon
     return gradient, historical_gradient
 
 def adagrad(gradient1, gradient2, hiddenLayer_Size, input, learningRate):
@@ -173,7 +173,6 @@ if __name__ == "__main__":
     X= 10.0
     # Hyperparameters (you should tune these)
     lr = 0.01  # Learning rate for basic gradient descent
-    momentum = 0.9  # Momentum coefficient
     num_steps = 100  # Number of optimization steps
 
     # Storage for plotting
@@ -192,6 +191,9 @@ def plotGrid(x1_history, x2_history, optimizer): #PLOTTING
     plt.ylabel('Value')
     plt.legend()
     plt.grid(True)
+    plt.show()
+
+
 
 # Gradient Descent
 x1GD,x2GD=GD(x2_, x4_,num_steps, X, lr)
@@ -217,8 +219,6 @@ x1adagrad, x2adagrad = adagrad(x2_, x4_,num_steps, X, lr)
 history['adagrad_x2'] = x1adagrad
 history['adagrad_x4'] = x2adagrad
 plotGrid(x1adagrad, x2adagrad, "AdaGrad")
-
-plt.show()
 
 
 """
